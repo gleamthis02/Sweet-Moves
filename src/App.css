@@ -1,0 +1,1071 @@
+/* ---------------------------------------------------------------
+   กรอบเกมแนวตั้งสัดส่วน 9:16
+   หน่วย cqw = 1% ของความกว้างกรอบเกม (ทุกอย่างย่อขยายตามหน้าจอ)
+---------------------------------------------------------------- */
+
+.game-frame {
+  position: relative;
+  width: min(100vw, calc(100vh * 9 / 16));
+  width: min(100vw, calc(100dvh * 9 / 16));
+  aspect-ratio: 9 / 16;
+  container-type: inline-size;
+  overflow: hidden;
+  background: #fff6f0;
+  font-family: "Mali", "Prompt", "Noto Sans Thai", sans-serif;
+  color: #5a3e4b;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* ---------------------- เปลี่ยนหน้าระหว่าง Chest / Mission / Rank ---------------------- */
+.tab-transition {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.tab-transition-layer {
+  position: absolute;
+  inset: 0;
+}
+.tab-transition-layer > .screen {
+  position: absolute;
+  inset: 0;
+}
+.tab-transition-out {
+  animation: tabSlideOut 0.5s ease-in-out forwards;
+}
+.tab-transition-in {
+  animation: tabSlideIn 0.5s ease-in-out forwards;
+}
+@keyframes tabSlideOut {
+  from { transform: translateY(0); }
+  to { transform: translateY(-100%); }
+}
+@keyframes tabSlideIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+
+img {
+  display: block;
+  -webkit-user-drag: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  background: none;
+}
+
+/* ---------------------------------------------------------------
+   ปุ่มที่ใช้รูป button.png (540x250)
+   ล็อกสัดส่วนด้วย aspect-ratio ภาพจึงไม่ยืด/บีบ
+---------------------------------------------------------------- */
+.image-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 540 / 250;
+  font-weight: 700;
+  white-space: nowrap;
+  gap: 0.8cqw;
+  color: #4a2a12;
+  text-shadow: 0 0.3cqw 0 rgba(255, 255, 255, 0.5);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  transition: transform 0.1s;
+}
+.image-button:active {
+  transform: scale(0.95);
+}
+
+/* ---------------------------------------------------------------
+   แถวดาว 3 ดวง (icon_Star 92x108) กำหนดแค่ความสูง ความกว้างคำนวณเอง
+---------------------------------------------------------------- */
+.stars {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6cqw;
+}
+.stars img {
+  height: 7cqw;
+  width: auto;
+}
+
+/* ---------------------- หน้าด่าน (แนวนอน เลื่อนซ้าย-ขวา) ---------------------- */
+.stage-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  touch-action: pan-x;
+  scrollbar-width: none;
+}
+.stage-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* "โลก" กว้างตามจำนวนรูป สูงเท่ากรอบเกม */
+.stage-world {
+  position: relative;
+  height: 100%;
+  background: #070709;
+}
+
+.stage-black-cap {
+  position: absolute;
+  top: 0;
+  z-index: 0;
+  height: 100%;
+  background: #070709;
+  pointer-events: none;
+}
+
+/* รูปพื้นหลัง 2752x1536 ล็อกสัดส่วนด้วยความกว้าง/สูงที่คำนวณจาก JSX */
+.stage-bg {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  height: 100%;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* จุดวางปุ่มด่าน (กึ่งกลางปุ่มอยู่ที่ตำแหน่ง left/top) */
+.level-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.level-button {
+  position: relative;
+  width: 20cqw;
+  height: fit-content;
+  transition: transform 0.1s;
+}
+.level-button:active {
+  transform: scale(0.94);
+}
+.level-button img {
+  width: 100%;
+  height: auto; /* squard_red 265x266 คงสัดส่วนเดิม */
+}
+.level-button.locked {
+  filter: grayscale(1) brightness(0.8);
+  cursor: not-allowed;
+}
+
+.level-number {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 20%;
+  font-size: 9cqw;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 1.2cqw #b8455f;
+  paint-order: stroke fill;
+  text-align: center;
+}
+
+.level-stars {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 88%; /* ดาวอยู่ใต้ปุ่ม เกยขอบล่างเล็กน้อย */
+}
+.level-stars img {
+  height: 6.5cqw;
+}
+
+/* ---------------------- กล่องเด้งเมื่อกดด่าน ---------------------- */
+/* Background_Brown 1792x2398 ล็อกสัดส่วนด้วย aspect-ratio ความกว้างกำหนดจาก JSX */
+.popup {
+  position: absolute;
+  z-index: 6;
+  aspect-ratio: 1792 / 2398;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5cqw;
+  padding: 6cqw 6cqw 7cqw;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  color: #2f2a28;
+  transform-origin: bottom left;
+  animation: pop 0.18s ease-out;
+}
+@keyframes pop {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.popup-head {
+  display: flex;
+  align-items: center;
+  gap: 2cqw;
+  padding-left: 1cqw;
+}
+.popup-title {
+  font-size: 8cqw;
+  line-height: 1.1;
+  color: #7a5a4a;
+  white-space: nowrap;
+}
+.popup-stars img {
+  height: 8.5cqw;
+}
+
+/* แผ่นด้านในที่มีข้อความ */
+.popup-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5cqw;
+  padding: 4cqw 4.5cqw 4.5cqw;
+  border-radius: 4cqw;
+  background: transparent;
+}
+.popup-line {
+  margin: 0;
+  font-size: 6cqw;
+  line-height: 1.25;
+  transform: translate(-3cqw, -2cqw);
+}
+.popup-panel .image-button {
+  align-self: center;
+  margin-top: auto;
+  transform: translateY(7cqw);
+}
+
+/* ---------------------- หน้าเล่น ---------------------- */
+/* Background_Ingame 1536x2752 ใหญ่เต็มจอ (ใช้ทั้งหน้าเล่นและหน้าสรุปผล) */
+.ingame-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* ภาพกล้องอยู่ในกรอบ ตำแหน่งกำหนดจาก CAMERA_SIDE / CAMERA_TOP / CAMERA_BOTTOM ใน JSX */
+.camera-window {
+  position: absolute;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: 3cqw;
+  background: #3d2a33;
+}
+.camera-window video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* กลับภาพเป็นกระจก */
+}
+.camera-message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6cqw;
+  text-align: center;
+  font-size: 4.6cqw;
+  color: #fff;
+}
+.camera-hint {
+  position: absolute;
+  left: 50%;
+  top: 4cqw; /* กล่องภารกิจอยู่ล่างสุดแล้ว ย้ายข้อความบอกใบ้ขึ้นบน */
+  transform: translateX(-50%);
+  max-width: 90%;
+  padding: 1.6cqw 3.6cqw;
+  border-radius: 5cqw;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 4cqw;
+  text-align: center;
+}
+
+/* กล่องภารกิจ Background_Mission 1028x512 (ล็อกสัดส่วนจาก JSX) */
+.mission-box {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  padding: 5% 7%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  color: #2f2a28;
+  text-align: left;
+}
+.mission-title {
+  font-size: 6.4cqw;
+  line-height: 1.15;
+  color: #7a6454;
+}
+.mission-detail {
+  font-size: 4.8cqw;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.mission-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.mission-stars {
+  justify-content: flex-start;
+}
+.mission-stars img {
+  height: 6cqw;
+}
+.skip-star {
+  height: 4.6cqw;
+  width: auto;
+}
+
+/* กล่องเวลามุมขวาล่าง (ใช้รูป Background_Time ไม่ยืดสัดส่วน) */
+.time-box {
+  position: absolute;
+  right: 4cqw;
+  top: 3cqw; /* กล่องเวลาอยู่มุมขวาบน แถวเดียวกับปุ่มตั้งค่า */
+  z-index: 3;
+}
+.time-box img {
+  width: 100%;
+  height: auto;
+}
+.time-box span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5cqw;
+  font-weight: 700;
+  color: #6a4a3a;
+}
+
+/* ---------------------- หน้าสรุปผล ---------------------- */
+.result-content {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  top: 22cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3cqw;
+}
+.result-stars {
+  gap: 0;
+  margin-bottom: 4cqw;
+}
+.result-stars img {
+  height: 20cqw;
+  margin: 0 -0.5cqw;
+}
+/* ดาวกลางใหญ่และสูงกว่า ดาวข้างเอียงเล็กน้อย */
+.result-stars img:nth-child(1) {
+  transform: translateY(2.5cqw) rotate(-10deg);
+}
+.result-stars img:nth-child(2) {
+  height: 25cqw;
+  transform: translateY(-2cqw);
+}
+.result-stars img:nth-child(3) {
+  transform: translateY(2.5cqw) rotate(10deg);
+}
+.result-title {
+  margin: 0;
+  font-size: 8.4cqw;
+  font-weight: 700;
+  color: #c8a02b;
+}
+.result-line {
+  margin: 0;
+  font-size: 6.4cqw;
+  color: #2f2a28;
+}
+
+/* ปุ่มล่างสุดอยู่ตำแหน่งหลัก (bottom) ปุ่มอื่นต่อขึ้นไปชิดกัน ปรับระยะที่ --result-overlap */
+.result-buttons {
+  --result-overlap: 2cqw;
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 26cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.result-buttons > .image-button:not(:last-child) {
+  margin-bottom: calc(var(--result-overlap) * -1);
+}
+
+/* ---------------------- แถบเมนูด้านล่าง ---------------------- */
+/* ขนาดแถบและไอคอนกำหนดจาก JSX (ตามสัดส่วนรูป) */
+.bottom-nav {
+  position: absolute;
+  left: 50%;
+  bottom: 2cqw;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.nav-button {
+  height: 100%;
+  width: 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-button img {
+  height: var(--icon-h); /* icon 57x82 กำหนดแค่ความสูง */
+  width: auto;
+  transition: transform 0.12s;
+}
+.nav-button:active img {
+  transform: scale(0.92);
+}
+.nav-button.active img {
+  transform: translateY(-4%) scale(1.12);
+}
+
+/* ---------------------- ตั้งค่า ---------------------- */
+/* ปุ่ม icon_settings (61x69) มุมซ้ายบน กำหนดแค่ความสูง */
+.settings-icon-button {
+  position: absolute;
+  top: 3cqw;
+  left: 3cqw;
+  z-index: 30;
+}
+.settings-icon-button img {
+  height: 13cqw;
+  width: auto;
+}
+.settings-icon-button:active {
+  transform: scale(0.92);
+}
+
+/* ชั้นบนสุดของจอ */
+.settings-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(40, 20, 30, 0.35);
+}
+
+/* Background_Settings 335x414 ล็อกสัดส่วน กลางจอเยื้องขึ้นบนเล็กน้อย */
+.settings-panel {
+  position: absolute;
+  left: 12cqw; /* (100 - 76) / 2 */
+  top: 30cqw;
+  width: 76cqw;
+  aspect-ratio: 335 / 414;
+  padding: 11cqw 8cqw 8cqw;
+  display: flex;
+  flex-direction: column;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  color: #5a3e4b;
+  animation: pop 0.18s ease-out;
+}
+.settings-title {
+  margin: 0;
+  text-align: center;
+  font-size: 7.6cqw;
+  line-height: 1.1;
+  color: #7a5a4a;
+  transform: translate(-1cqw, -6cqw);
+}
+.settings-rows {
+  margin-top: 5cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 4cqw;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2cqw;
+}
+.settings-label {
+  font-size: 6cqw;
+  color: #2f2a28;
+}
+/* ปุ่มเปิด/ปิด ใช้รูปเดิมไม่ยืด กำหนดแค่ความกว้าง */
+.toggle-button img {
+  width: 18cqw;
+  height: auto;
+}
+.toggle-button:active {
+  transform: scale(0.94);
+}
+.settings-logout {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1cqw;
+  transform: translateY(5cqw);
+}
+
+/* ---------------------- ภารกิจประจำวันบน Wallpaper_Yellow ---------------------- */
+.daily-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.daily-title-wrap {
+  position: absolute;
+  top: 1.5cqw;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 62cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.daily-title-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.daily-heading {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: center;
+  color: #fff;
+  font-size: 4.6cqw;
+  font-weight: 700;
+  white-space: nowrap;
+  text-shadow: 0 0.4cqw 0.8cqw rgba(75, 35, 30, 0.5);
+}
+.daily-score {
+  position: absolute;
+  top: 18.5cqw;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2cqw;
+  font-size: 4.6cqw;
+  font-weight: 700;
+  color: #4b5c8c;
+  text-shadow: 0 0.3cqw rgba(255, 255, 255, 0.7);
+  transform: translate(15.5cqw, 3.4cqw);
+}
+.daily-score img {
+  height: 4.5cqw;
+  width: auto;
+}
+.daily-missions {
+  position: absolute;
+  top: 27cqw;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15cqw;
+}
+.daily-card {
+  position: relative;
+  width: 78cqw;
+  aspect-ratio: 1028 / 512;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding: 2.8% 5.5% 2.6%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  color: #4b382d;
+}
+.daily-card-title {
+  font-size: 4.5cqw;
+  line-height: 1.05;
+  font-weight: 700;
+  color: #79543d;
+  transform: translateY(1cqw);
+}
+.daily-card-description {
+  font-size: 4cqw;
+  line-height: 1.1;
+  font-weight: 700;
+}
+.daily-card-progress {
+  font-size: 4cqw;
+  line-height: 1.05;
+  font-weight: 700;
+  transform: translateY(-2cqw);
+}
+.daily-card-reward {
+  display: flex;
+  align-items: center;
+  gap: 0.8cqw;
+  font-size: 4cqw;
+  line-height: 1;
+  font-weight: 700;
+  transform: translateY(-2cqw);
+}
+.daily-card-reward img {
+  height: 3.5cqw;
+  width: auto;
+}
+.daily-card.completed .daily-card-progress {
+  color: #39814a;
+}
+.daily-claimed {
+  margin-left: auto;
+  color: #39814a;
+  font-size: 2.5cqw;
+}
+.daily-reset-timer {
+  position: static;      /* เดิม absolute */
+  width: 78cqw;          /* เท่ากับความกว้างการ์ด */
+  margin-top: 0.5cqw;    /* ระยะห่างจากการ์ดใบล่างสุด */
+  text-align: right;     /* ชิดมุมขวาล่างของการ์ด */
+  color: #ffffff;
+  font-size: 2.6cqw;
+  font-weight: 700;
+
+}
+
+/* ---------------------- ตั้งชื่อผู้เล่น ---------------------- */
+.name-screen {
+  z-index: 60; /* สูงกว่าปุ่มตั้งค่า (30) และกล่องตั้งค่า (50) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.name-box {
+  width: 76cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5cqw;
+  padding: 8cqw 6cqw;
+  border-radius: 5cqw;
+  background: rgba(255, 246, 240, 0.92);
+}
+.name-title {
+  margin: 0;
+  font-size: 6.4cqw;
+  font-weight: 700;
+  color: #7a5a4a;
+}
+.name-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 3cqw;
+  border: 0.6cqw solid #c9a58f;
+  border-radius: 3cqw;
+  font-family: inherit;
+  font-size: 5.2cqw;
+  text-align: center;
+  color: #5a3e4b;
+  background: #fff;
+}
+
+/* ---------------------- Leaderboard ---------------------- */
+.rank-panel {
+  position: absolute;
+  top: 22cqw;   /* เดิม 18cqw เลื่อนลงให้พ้นป้าย Title */
+  left: 7cqw;
+  right: 7cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5cqw;
+}
+/* แถบผู้เล่น List_Player.png (525x97) อยู่บนสุดก่อนตารางอันดับ */
+.rank-player {
+  width: 100%;
+  aspect-ratio: 525 / 97;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 4cqw;
+  padding: 0 7%;
+  margin-bottom: 1.5cqw;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  font-size: 4.8cqw;
+  font-weight: 700;
+  color: #4b382d;
+  
+}
+.rank-player-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: translate(60px, 0px);
+}
+.rank-player-score {
+  display: flex;
+  align-items: center;
+  gap: 1cqw;
+  flex: 0 0 auto;
+}
+.rank-player-score img {
+  height: 4.5cqw;
+  width: auto;
+}
+.rank-empty {
+  text-align: center;
+  font-size: 4.6cqw;
+  color: #fff;
+}
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 3cqw;
+  padding: 1.2cqw 4cqw;
+  border-radius: 3cqw;
+  background: rgba(255, 246, 240, 0.92);
+  font-size: 4.4cqw;
+  font-weight: 700;
+  color: #4b382d;
+}
+.rank-row.me {
+  background: #ffe9a8;
+}
+.rank-mine {
+  margin-top: 2cqw;
+}
+.rank-no {
+  width: 8cqw;
+  text-align: center;
+  color: #79543d;
+}
+.rank-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-score {
+  display: flex;
+  align-items: center;
+  gap: 1cqw;
+}
+.rank-score img {
+  height: 4.5cqw;
+  width: auto;
+}
+
+
+/* ---------------------- Daily Challenge ---------------------- */
+
+.challenge-screen .daily-score {
+  /* ใช้ตำแหน่งคะแนนเดิมของหน้า Daily Mission */
+}
+
+.challenge-screen .daily-missions {
+  gap: 0.15cqw;
+}
+
+.challenge-card {
+  position: relative;
+  padding: 2.8% 5.5% 2.6%;
+  justify-content: flex-start;   /* ชื่อชาเล้นท์อยู่บน ต่อด้วยจำนวนครั้ง */
+  gap: 1.5cqw;
+}
+
+.challenge-card .daily-card-title {
+  font-size: 4.5cqw;
+  transform: translateY(0.5cqw);
+}
+
+.challenge-card .daily-card-progress {
+  font-size: 4cqw;
+  transform: none;
+}
+
+/* รางวัล: 1 ⭐ (มุมล่างซ้าย แนวเดียวกับปุ่ม) */
+.challenge-card .daily-card-reward {
+  position: absolute;
+  
+  bottom: 19.5%;   /* กึ่งกลางแนวเดียวกับปุ่มเล่น */
+  display: flex;
+  align-items: center;
+  gap: 0.8cqw;
+  font-size: 4cqw;
+  transform: none;
+}
+
+.challenge-card .daily-card-reward img {
+  height: 4cqw;
+  width: auto;
+}
+
+/* ปุ่มเล่น (มุมล่างขวา) ใช้รูป Button/button.png (540x250)
+   รูปอยู่ใน ::before เพื่อให้ปรับสีรูปได้โดยตัวหนังสือไม่เปลี่ยนสีตาม */
+.challenge-play-button {
+  position: absolute;
+  right: 0.1%;
+  bottom: 3%;
+  width: 24cqw;
+  aspect-ratio: 540 / 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 3.1cqw;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #4a2a12;
+  text-shadow: 0 0.3cqw 0 rgba(255, 255, 255, 0.5);
+  transition: transform 0.1s;
+}
+
+.challenge-play-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--btn-image);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.challenge-play-button span {
+  position: relative;   /* ให้ตัวหนังสืออยู่เหนือรูปปุ่ม */
+}
+
+.challenge-play-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* เล่นสำเร็จแล้ว: เปลี่ยนรูปปุ่มเป็นโทนเขียว (หมุนสีจากปุ่มสีเหลือง) */
+.challenge-play-button:disabled,
+.challenge-play-button.done {
+  color: #1f4d2a;
+  text-shadow: 0 0.3cqw 0 rgba(255, 255, 255, 0.5);
+  cursor: default;
+}
+
+.challenge-play-button:disabled::before,
+.challenge-play-button.done::before {
+  filter: hue-rotate(75deg) saturate(1.1);
+}
+
+/* ดาวที่ได้รับในการ์ดชาเล้นท์ (ชิดซ้าย) */
+.challenge-card .challenge-stars {
+  justify-content: flex-start;
+}
+.challenge-card .challenge-stars img {
+  height: 5cqw;
+}
+
+/* ---------------------- นับถอยหลังเตรียมพร้อม ---------------------- */
+.countdown-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2cqw;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  text-shadow: 0 0.6cqw 0 rgba(0, 0, 0, 0.35);
+}
+.countdown-label {
+  font-size: 7cqw;
+  font-weight: 700;
+}
+.countdown-number {
+  font-size: 28cqw;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* ---------------------- ยืนยันออกจากระบบ ---------------------- */
+.confirm-panel .settings-title {
+  transform: translate(-1cqw, -5cqw);
+}
+.confirm-text {
+  margin: 0;
+  text-align: center;
+  font-size: 4.6cqw;
+  line-height: 1.35;
+  color: #2f2a28;
+}
+.confirm-buttons {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2cqw;
+}
+
+/* ---------------------- หน้าดูคลิปย้อนหลัง ---------------------- */
+.replay-box {
+  position: absolute;
+  z-index: 2;
+  left: 8cqw;
+  right: 8cqw;
+  top: 6cqw;
+  bottom: 36cqw;
+  overflow: hidden;
+  border-radius: 3cqw;
+  background: #3d2a33;
+  
+}
+.replay-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.replay-buttons {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 22cqw;
+  display: flex;
+  justify-content: center;
+  transform: translate(0px, 60px);
+  
+}
+
+/* ---------------------- หน้ารวมคลิปย้อนหลัง ---------------------- */
+.clips-list {
+  position: absolute;
+  z-index: 2;
+  left: 6cqw;
+  right: 6cqw;
+  top: 28cqw;
+  bottom: 40cqw;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2cqw;
+}
+.clips-empty {
+  margin: 6cqw 0 0;
+  text-align: center;
+  font-size: 6.6cqw;
+  color: #b9f2ff;
+  transform: translateY(50cqw);
+}
+.clip-row {
+  display: flex;
+  align-items: stretch;
+  gap: 2cqw;
+  flex-shrink: 0;
+}
+.clip-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 2cqw;
+  padding: 2cqw 3cqw;
+  border-radius: 3cqw;
+  background: rgba(255, 246, 240, 0.92);
+  color: #5a3e4b;
+  text-align: left;
+}
+.clip-main:active {
+  transform: scale(0.98);
+}
+.clip-label {
+  font-size: 4.6cqw;
+  font-weight: 700;
+}
+.clip-date {
+  grid-column: 1;
+  font-size: 3.4cqw;
+  color: #8a6a5a;
+}
+.clip-stars {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.clip-stars img {
+  height: 5cqw;
+}
+.clip-delete {
+  padding: 0 3.4cqw;
+  border-radius: 3cqw;
+  background: rgba(255, 246, 240, 0.92);
+  color: #b0473f;
+  font-size: 4cqw;
+  font-weight: 700;
+}
+.clips-note {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 38cqw;
+  margin: 0;
+  text-align: center;
+  font-size: 0.1cqw;
+  color: #ffffff;
+}
+
+/* ป้าย "Sweet Moves Prototype" มุมซ้ายบน แสดงทุกหน้า สีจางแต่ยังมองเห็น */
+.version-badge {
+  position: absolute;
+  top: 0.6cqw;
+  right: 2cqw;
+  z-index: 100;
+  font-size: 2.4cqw;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 0 0.6cqw rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  user-select: none;
+}
